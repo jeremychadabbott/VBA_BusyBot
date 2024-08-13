@@ -136,12 +136,12 @@ Task_Load_Drawings:
     Dim PMmasterLocation As String
     PMmasterLocation = "\\server2\Dropbox\Jeremy Abbott\PM assistant (Master).xlsm"
     
-    ' TODO: Implement drawing loading logic
+    ' Implement drawing loading logic
     
     GoTo select_Task
     
 Task_Load_Committed_Cost_Report:
-    ' TODO: Implement committed cost report loading logic
+    ' Implement committed cost report loading logic
     
     GoTo select_Task
     
