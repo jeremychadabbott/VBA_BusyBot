@@ -5,7 +5,10 @@ Sub Busy_Body(emailmessage As String)
     Dim randomTask As Integer
     Dim Case1 As Integer, Case2 As Integer, Case3 As Integer, Case4 As Integer
     Dim totalWeight As Integer, randomValue As Integer, cumulativeWeight As Integer
-    
+
+select_Task:
+    ' This label is used for looping back to task selection
+
     Case1 = 75
     Case2 = 15
     Case3 = 5
@@ -145,6 +148,5 @@ Task_Load_Committed_Cost_Report:
     
     GoTo select_Task
     
-select_Task:
-    ' This label is used for looping back to task selection
+
 End Sub
