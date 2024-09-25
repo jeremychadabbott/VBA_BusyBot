@@ -31,6 +31,7 @@ select_Task:
         GoTo Task_Load_Committed_Cost_Report
     End If
     
+    
 Task_Process_Invoice:
     Dim folderPaths(1 To 3) As String
     folderPaths(1) = "\\server2\Faxes\PLATT - 234\Backup"
@@ -110,7 +111,8 @@ Task_Process_Invoice:
     Set objFolder = Nothing
     Set colInvoices = Nothing
     
-    Exit Sub
+    GoTo select_Task
+    
     
 Task_Look_at_Email:
     Dim TargetURL As String
@@ -135,17 +137,56 @@ Task_Look_at_Email:
     
     GoTo select_Task
     
+    
 Task_Load_Drawings:
     Dim PMmasterLocation As String
     PMmasterLocation = "\\server2\Dropbox\Jeremy Abbott\PM assistant (Master).xlsm"
     
     ' Implement drawing loading logic
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim lastRow As Long
+    Dim fileLocations() As String
+    Dim i As Long
+    Dim Vpath As String
+
+    PMmasterLocation = "\\server2\Dropbox\Jeremy Abbott\PM assistant (Master).xlsm"
+
+    ' Open the workbook as read-only
+    Set wb = Workbooks.Open(Filename:=PMmasterLocation, ReadOnly:=True)
+
+    ' Assuming the relevant data is in the first worksheet
+    Set ws = wb.Sheets(1)
+
+    ' Find the last row in column A starting from A21
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+
+    ' Resize the array to hold the file locations
+    ReDim fileLocations(1 To lastRow - 20)
+
+    ' Loop through cells A21 to lastRow and store file locations in the array
+    For i = 21 To lastRow
+        fileLocations(i - 20) = ws.Cells(i, 1).Value
+    Next i
+
+    ' Close the workbook
+    wb.Close SaveChanges:=False
+
+    ' Randomly select one of the locations from the array
+    Randomize ' Seed the random number generator
+    Vpath = fileLocations(Int((UBound(fileLocations) - LBound(fileLocations) + 1) * Rnd + LBound(fileLocations)))
+
+    ' Output the selected file path
+    MsgBox "in drawing load branch, selected pathway is:" & Vpath
+
     
     GoTo select_Task
+    
     
 Task_Load_Committed_Cost_Report:
     ' Implement committed cost report loading logic
     
     GoTo select_Task
     
+
 End Sub
