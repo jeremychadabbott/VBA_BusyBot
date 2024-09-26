@@ -137,7 +137,6 @@ Task_Look_at_Email:
     
     GoTo select_Task
     
-    
 Task_Load_Drawings:
     Dim PMmasterLocation As String
     PMmasterLocation = "\\server2\Dropbox\Jeremy Abbott\PM assistant (Master).xlsm"
@@ -149,24 +148,30 @@ Task_Load_Drawings:
     Dim fileLocations() As String
     Dim i As Long
     Dim Vpath As String
-
-    PMmasterLocation = "\\server2\Dropbox\Jeremy Abbott\PM assistant (Master).xlsm"
+    Dim Xpath As String
+    Dim randomSubfolder As String
+    Dim pdfFiles As Collection
+    Dim subfolders As Collection
+    Dim depth As Integer
+    Dim maxDepth As Integer
+    Dim fileName As String
+    Dim pdfFound As Boolean
 
     ' Open the workbook as read-only
-    Set wb = Workbooks.Open(Filename:=PMmasterLocation, ReadOnly:=True)
+    Set wb = Workbooks.Open(fileName:=PMmasterLocation, ReadOnly:=True)
 
     ' Assuming the relevant data is in the first worksheet
     Set ws = wb.Sheets(1)
 
-    ' Find the last row in column A starting from A21
-    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    ' Find the last row in column B starting from B21
+    lastRow = ws.Cells(ws.Rows.Count, "B").End(xlUp).Row
 
     ' Resize the array to hold the file locations
     ReDim fileLocations(1 To lastRow - 20)
 
-    ' Loop through cells A21 to lastRow and store file locations in the array
+    ' Loop through cells B21 to lastRow and store file locations in the array
     For i = 21 To lastRow
-        fileLocations(i - 20) = ws.Cells(i, 1).Value
+        fileLocations(i - 20) = ws.Cells(i, 2).Value
     Next i
 
     ' Close the workbook
@@ -177,7 +182,85 @@ Task_Load_Drawings:
     Vpath = fileLocations(Int((UBound(fileLocations) - LBound(fileLocations) + 1) * Rnd + LBound(fileLocations)))
 
     ' Output the selected file path
-    MsgBox "in drawing load branch, selected pathway is:" & Vpath
+    'MsgBox "In drawing load branch, selected pathway is: " & Vpath
+
+    Dim subfolderArray As Variant
+    subfolderArray = Array("Drawings", "RFI's")
+    depth = 0 ' Start depth tracking
+    maxDepth = 2 ' Set maximum depth for folder navigation
+
+    ' Randomly select either the Drawings or RFI folder to start
+    randomIndex = Int((UBound(subfolderArray) - LBound(subfolderArray) + 1) * Rnd + LBound(subfolderArray))
+    currentFolder = subfolderArray(randomIndex)
+
+    Do
+        ' Initialize collections
+        Set pdfFiles = New Collection
+        Set subfolders = New Collection
+
+        ' Check for PDF files in the current folder
+        fileName = Dir(Vpath & "\" & currentFolder & "\*.pdf")
+        
+        ' Collect all PDF files in the current folder
+        Do While fileName <> ""
+            pdfFiles.Add Vpath & "\" & currentFolder & "\" & fileName
+            fileName = Dir
+        Loop
+
+        ' Check for subfolders in the current folder
+        Dim subfolderName As String
+        subfolderName = Dir(Vpath & "\" & currentFolder & "\*", vbDirectory)
+        
+        Do While subfolderName <> ""
+            If subfolderName <> "." And subfolderName <> ".." Then
+                If (GetAttr(Vpath & "\" & currentFolder & "\" & subfolderName) And vbDirectory) <> 0 Then
+                    subfolders.Add Vpath & "\" & currentFolder & "\" & subfolderName
+                End If
+            End If
+            subfolderName = Dir
+        Loop
+
+        ' Randomly decide whether to open a PDF or dive into a subfolder
+        If pdfFiles.Count > 0 Then
+            If Rnd < 0.5 Then
+                ' Open a random PDF file from the collected PDFs
+                randomIndex = Int((pdfFiles.Count) * Rnd) + 1
+                Xpath = pdfFiles(randomIndex)
+                'MsgBox "Selected PDF file: " & Xpath
+                ' Open the PDF
+                Shell "explorer.exe """ & Xpath & """", vbNormalFocus
+                ' Wait for 2 minutes
+                Application.Wait (Now + TimeValue("00:02:00"))
+                ' Close the PDF (use Alt+F4)
+                SendKeys "%{F4}" ' Alt + F4 to close
+                Exit Do ' Exit the loop after opening the PDF
+            Else
+                ' Dive deeper into subfolders if within depth limit
+                If depth < maxDepth Then
+                    Randomize ' Re-seed random number generator
+                    randomIndex = Int((subfolders.Count) * Rnd) + 1
+                    currentFolder = subfolders(randomIndex) ' Update to the selected subfolder
+                    depth = depth + 1 ' Increase depth
+                Else
+                    'MsgBox "Reached maximum depth. Terminating process."
+                    tries = tries + 1
+                    If tries > 2 Then
+                        tries = 0
+                        Exit Do
+                    End If
+                    GoTo Task_Load_Drawings:
+                End If
+            End If
+        Else
+            'MsgBox "No PDF files found in " & currentFolder & ". Terminating process."
+            tries = tries + 1
+            If tries > 2 Then
+                tries = 0
+                Exit Do
+            End If
+            GoTo Task_Load_Drawings:
+        End If
+    Loop
 
     
     GoTo select_Task
